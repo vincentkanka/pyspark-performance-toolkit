@@ -64,3 +64,40 @@ def test_no_broadcast_finding_for_two_large_tables():
     rule_ids = {finding.rule_id for finding in findings}
 
     assert "BROADCAST_JOIN_OPPORTUNITY" not in rule_ids
+
+def test_detects_large_unpartitioned_table():
+    workload = WorkloadMetadata(
+        tables=[
+            TableMetadata(
+                name="transactions",
+                size_mb=50000,
+                row_count=200000000,
+                partition_columns=[],
+            )
+        ],
+        joins=[],
+    )
+
+    findings = analyze_workload(workload)
+    rule_ids = {finding.rule_id for finding in findings}
+
+    assert "LARGE_UNPARTITIONED_TABLE" in rule_ids
+
+
+def test_no_unpartitioned_finding_for_partitioned_large_table():
+    workload = WorkloadMetadata(
+        tables=[
+            TableMetadata(
+                name="transactions",
+                size_mb=50000,
+                row_count=200000000,
+                partition_columns=["transaction_date"],
+            )
+        ],
+        joins=[],
+    )
+
+    findings = analyze_workload(workload)
+    rule_ids = {finding.rule_id for finding in findings}
+
+    assert "LARGE_UNPARTITIONED_TABLE" not in rule_ids

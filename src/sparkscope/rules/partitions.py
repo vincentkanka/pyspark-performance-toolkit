@@ -1,5 +1,6 @@
-from sparkscope.models import Finding
+from sparkscope.models import Finding, WorkloadMetadata
 
+LARGE_UNPARTITIONED_TABLE_THRESHOLD_MB = 10000
 
 def check_shuffle_partitions(config: dict[str, str]) -> list[Finding]:
     raw_value = config.get("spark.sql.shuffle.partitions")
@@ -69,3 +70,26 @@ def check_shuffle_partitions(config: dict[str, str]) -> list[Finding]:
         ]
 
     return []
+
+def check_large_unpartitioned_tables(workload: WorkloadMetadata) -> list[Finding]:
+    findings: list[Finding] = []
+
+    for table in workload.tables:
+        if table.size_mb >= LARGE_UNPARTITIONED_TABLE_THRESHOLD_MB and not table.partition_columns:
+            findings.append(
+                Finding(
+                    rule_id="LARGE_UNPARTITIONED_TABLE",
+                    severity="MEDIUM",
+                    title="Large table has no partition columns",
+                    description=(
+                        f"The table {table.name} is {table.size_mb:.1f} MB "
+                        "but has no partition columns defined."
+                    ),
+                    recommendation=(
+                        "Evaluate partitioning strategy based on common filter columns, "
+                        "data freshness requirements, and query access patterns."
+                    ),
+                )
+            )
+
+    return findings

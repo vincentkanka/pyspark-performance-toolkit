@@ -32,7 +32,15 @@ python -m pip install -e ".[dev]"
 
 Run SparkScope against the sample configuration:
 
+```bash
 sparkscope analyze examples/sample_config.json
+```
+
+Analyze workload metadata:
+
+```bash
+sparkscope analyze-workload examples/sample_workload.json
+```
 
 ## Example
 

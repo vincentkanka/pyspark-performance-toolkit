@@ -1,4 +1,19 @@
 # Changelog
+## v0.2.0 - Join and Partition Analyzer
+
+### Added
+- Workload metadata models for tables and joins
+- Workload metadata parser
+- Workload analyzer
+- Broadcast join opportunity detection
+- Large unpartitioned table detection
+- Join key and partition alignment detection
+- CLI command for workload analysis
+- Sample workload metadata file
+- Unit tests for workload analysis
+
+### Notes
+This release expands SparkScope from static Spark configuration analysis into workload metadata analysis. It introduces the first join and partition analysis capabilities and lays the foundation for future Spark event log and execution-plan analysis.
 
 ## v0.1.0 - Initial Configuration Analyzer
 

@@ -59,3 +59,44 @@ def check_broadcast_join_opportunities(workload: WorkloadMetadata) -> list[Findi
             )
 
     return findings
+
+def check_join_key_partition_alignment(workload: WorkloadMetadata) -> list[Finding]:
+    findings: list[Finding] = []
+    tables_by_name = {table.name: table for table in workload.tables}
+
+    for join in workload.joins:
+        left_table = tables_by_name.get(join.left_table)
+        right_table = tables_by_name.get(join.right_table)
+
+        if left_table is None or right_table is None:
+            continue
+
+        for table in [left_table, right_table]:
+            if not table.partition_columns or not join.join_keys:
+                continue
+
+            missing_keys = [
+                join_key
+                for join_key in join.join_keys
+                if join_key not in table.partition_columns
+            ]
+
+            if missing_keys:
+                findings.append(
+                    Finding(
+                        rule_id="JOIN_KEY_PARTITION_MISMATCH",
+                        severity="LOW",
+                        title="Join key does not align with partition columns",
+                        description=(
+                            f"The table {table.name} is partitioned by "
+                            f"{', '.join(table.partition_columns)}, but the join uses "
+                            f"{', '.join(join.join_keys)}."
+                        ),
+                        recommendation=(
+                            "Review whether partitioning supports the most common join and filter patterns. "
+                            "This does not always require changing partitioning, but it may indicate a shuffle risk."
+                        ),
+                    )
+                )
+
+    return findings

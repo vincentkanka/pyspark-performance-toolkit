@@ -101,3 +101,34 @@ def test_no_unpartitioned_finding_for_partitioned_large_table():
     rule_ids = {finding.rule_id for finding in findings}
 
     assert "LARGE_UNPARTITIONED_TABLE" not in rule_ids
+
+def test_detects_join_key_partition_mismatch():
+    workload = WorkloadMetadata(
+        tables=[
+            TableMetadata(
+                name="transactions",
+                size_mb=50000,
+                row_count=200000000,
+                partition_columns=["transaction_date"],
+            ),
+            TableMetadata(
+                name="customers",
+                size_mb=50,
+                row_count=100000,
+                partition_columns=["customer_region"],
+            ),
+        ],
+        joins=[
+            JoinMetadata(
+                left_table="transactions",
+                right_table="customers",
+                join_type="inner",
+                join_keys=["customer_id"],
+            )
+        ],
+    )
+
+    findings = analyze_workload(workload)
+    rule_ids = {finding.rule_id for finding in findings}
+
+    assert "JOIN_KEY_PARTITION_MISMATCH" in rule_ids
